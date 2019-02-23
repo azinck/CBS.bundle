@@ -9,7 +9,7 @@ HTTP_HEADERS = {
 }
 
 SHOWS_URL = 'https://www.cbs.com/shows/{}'
-EPISODES_JSON_URL = 'https://www.cbs.com/shows/{}/xhr/episodes/page/0/size/50/xs/0/season/'
+EPISODES_JSON_URL = 'https://www.cbs.com/shows/{}/xhr/episodes/page/0/size/50/xs/0/season/{}/'
 TP_VIDEO_URL = 'http://link.theplatform.com/s/dJ5BDC/media/guid/2198311517/{}?mbr=true&assetTypes=StreamPack&formats=MPEG4,M3U'
 
 CATEGORIES = [
@@ -79,7 +79,7 @@ def Shows(cat_title, cat_id):
         thumb = item.get('data-src')
 
         oc.add(DirectoryObject(
-            key = Callback(Episodes, title=title, slug=slug),
+            key = Callback(Seasons, title=title, slug=slug),
             title = title,
             thumb = thumb
         ))
@@ -87,11 +87,29 @@ def Shows(cat_title, cat_id):
     return oc
 
 ####################################################################################################
-@route(PREFIX + '/episodes')
-def Episodes(title, slug):
+@route(PREFIX + '/seasons')
+def Seasons(title, slug):
 
     oc = ObjectContainer(title2=unicode(title))
-    json_obj = JSON.ObjectFromString(GetData(EPISODES_JSON_URL.format(slug)))
+    html = HTML.ElementFromString(GetData(SHOWS_URL.format(slug)))
+
+    for item in html.xpath('//*[@id="latest-episodes"]/ul/select//option'):
+        s_title = item.text
+        s_num = item.get('value')
+
+        oc.add(DirectoryObject(
+            key = Callback(Episodes, title=s_title, slug=slug, season=s_num),
+            title = s_title
+        ))
+
+    return oc
+
+####################################################################################################
+@route(PREFIX + '/episodes')
+def Episodes(title, slug, season):
+
+    oc = ObjectContainer(title2=unicode(title))
+    json_obj = JSON.ObjectFromString(GetData(EPISODES_JSON_URL.format(slug, season)))
 
     if 'result' in json_obj and 'data' in json_obj['result']:
 
