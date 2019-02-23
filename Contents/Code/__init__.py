@@ -115,8 +115,9 @@ def Episodes(title, slug, season):
 
         for video in json_obj['result']['data']:
 
-            if video['type'] != "Full Episode":
-                continue
+            if video['type'] != "Full Episode" or video['status'] != "AVAILABLE":
+                if video['type'] != "Full Episode":
+                    continue
 
             content_id = video['content_id']
 
